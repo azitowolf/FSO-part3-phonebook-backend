@@ -1,11 +1,12 @@
 const express = require('express')
 const app = express()
+app.use(express.json())
+app.use(express.static('build'))
 
 const morgan = require('morgan')
 morgan.token('RequestBodyToken', function (req, res) { return JSON.stringify(req.body) });
 const morganConfig = morgan(':method :url :status :res[content-length] - :response-time ms :RequestBodyToken')
 
-app.use(express.json())
 app.use(morganConfig)
 
 
