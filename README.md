@@ -2,6 +2,8 @@ Deployment and App Config Checklist
 
 * BE get backend online
 ** git repo init
+** procfile
+** process.env for server port
 ** heroku init
 ** test requests
 
