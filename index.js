@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express()
-const morgan = require('morgan')
 
+const morgan = require('morgan')
 morgan.token('RequestBodyToken', function (req, res) { return JSON.stringify(req.body) });
 const morganConfig = morgan(':method :url :status :res[content-length] - :response-time ms :RequestBodyToken')
 
@@ -26,10 +26,6 @@ let persons = [
     "id": 4
   }
 ]
-
-app.get('/', (request, response) => {
-  response.send('<h1>Nothing to see here!</h1>')
-})
 
 // exercise 3.1
 app.get('/api/persons', (request, response) => {
