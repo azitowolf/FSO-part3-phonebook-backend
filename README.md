@@ -1,3 +1,20 @@
+# U Helsinki Fullstack Open Coursework
+
+## Assignment 3b: Deploying App to the internet
+
+## Notes App
+### Source
+https://github.com/azitowolf/notes-backend 
+### Live Demo
+https://pure-garden-57296.herokuapp.com/
+
+## Phonebook App
+### Source
+https://github.com/azitowolf/phonebook-backend
+### Live Demo
+https://desolate-citadel-80539.herokuapp.com/
+
+
 Deployment and App Config Checklist
 
 * BE get backend online
