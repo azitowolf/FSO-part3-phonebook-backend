@@ -9,7 +9,6 @@ const morganConfig = morgan(':method :url :status :res[content-length] - :respon
 
 app.use(morganConfig)
 
-
 let persons = [
   {
     "name": "Arto Hellas",
@@ -24,7 +23,7 @@ let persons = [
   {
     "name": "Test Testerson",
     "number": "1234123123",
-    "id": 4
+    "id": 3
   }
 ]
 
@@ -84,9 +83,7 @@ app.post('/api/persons', (request, response) => {
   }
 
   persons = persons.concat(person)
-  
   response.json(persons)
-
 })
 
 // exercise 3.4

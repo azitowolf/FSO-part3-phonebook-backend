@@ -14,4 +14,4 @@ Deployment and App Config Checklist
  * run BE locally with static files 
 
 * BE set up build process & automate
-** build and copy from the FE to BE folder
+ * build and copy from the FE to BE folder
