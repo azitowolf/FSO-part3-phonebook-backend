@@ -2,6 +2,8 @@ const express = require('express')
 const app = express()
 app.use(express.json())
 app.use(express.static('build'))
+const Person = require('./models/person')
+var mongoose = require('mongoose');
 
 const morgan = require('morgan')
 morgan.token('RequestBodyToken', function (req, res) { return JSON.stringify(req.body) });
@@ -9,27 +11,11 @@ const morganConfig = morgan(':method :url :status :res[content-length] - :respon
 
 app.use(morganConfig)
 
-let persons = [
-  {
-    "name": "Arto Hellas",
-    "number": "1234567",
-    "id": 1
-  },
-  {
-    "name": "Samuel Smith",
-    "number": "21234",
-    "id": 2
-  },
-  {
-    "name": "Test Testerson",
-    "number": "1234123123",
-    "id": 3
-  }
-]
-
 // exercise 3.1
 app.get('/api/persons', (request, response) => {
-  response.json(persons)
+  Person.find({}).then(persons => {
+    response.json(persons.map(person => person.toJSON()))
+  })
 })
 
 // exercise 3.2
@@ -55,7 +41,6 @@ app.get('/api/persons/:id', (request, response) => {
     }
 })
 
-// exercise 3.5
 const generateId = () => {
   const randomId = Math.floor(Math.random() * 1000)
   return randomId
@@ -64,37 +49,68 @@ const generateId = () => {
 app.post('/api/persons', (request, response) => {
   const body = request.body
 
-  // exercise 3.6
-  if (!body.name || !body.number) {
-    return response.status(400).json({ 
-      error: 'name or number is missing' 
-    })
-  }
-  if (persons.find((person) => person.name === body.name)) {
-    return response.status(409).json({ 
-      error: 'duplicate record detected' 
-    })
+  if (body.name === undefined) {
+    return response.status(400).json({ error: 'content missing' })
   }
 
-  const person = {
+  const personToAdd = new Person({
     name: body.name,
-    number: body.number,
-    id: generateId(),
-  }
+    number: body.number
+  })
 
-  persons = persons.concat(person)
-  response.json(persons)
+  personToAdd.save().then(savedPerson => {
+    response.json(savedPerson.toJSON())
+  })
+  
 })
 
-// exercise 3.4
+// TODO: Front End handles update optimistically, without a refresh
+app.put('/api/persons/:id', (request, response) => {
+  const body = request.body
+  const id = request.params.id
+  const filter = { name: body.name}
+  const update = {number: body.number}
+
+  Person.findOneAndUpdate(filter, update)
+  .then((updatedPerson) => {
+    response.json(updatedPerson.toJSON())
+  })
+
+})
+
 app.delete('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  persons = persons.filter(person => person.id !== id)
-  console.log(id)
-  response.status(204).end()
+  const id = request.params.id
+  
+  Person.deleteOne({ _id: id })
+  .then(() => {
+    response.status(204).end()
+  })
+  .catch((err) => {
+    next(err)
+  })
 })
 
-const PORT = process.env.PORT || 3001
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  } 
+  next(error)
+}
+
+// handler of other error types
+// TODO: add more error types https://expressjs.com/en/guide/error-handling.html
+app.use(errorHandler)
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+// handler of requests with unknown endpoint
+app.use(unknownEndpoint)
+
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
