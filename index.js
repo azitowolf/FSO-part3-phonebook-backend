@@ -5,7 +5,7 @@ app.use(express.static('build'))
 const Person = require('./models/person')
 
 const morgan = require('morgan')
-morgan.token('RequestBodyToken', function (req, res) { return JSON.stringify(req.body) });
+morgan.token('RequestBodyToken', function (req) { return JSON.stringify(req.body) });
 const morganConfig = morgan(':method :url :status :res[content-length] - :response-time ms :RequestBodyToken')
 
 app.use(morganConfig)
@@ -19,25 +19,27 @@ app.get('/api/persons', (request, response) => {
 
 // exercise 3.2
 app.get('/info', (request, response) => {
-  let responseHTML = 
+  let responseHTML =
   `<h2>
-    Phonebook has info for ${persons.length} people
+    Phonebook has info for 5 people
   </h2>
   <p>
     ${new Date()}
-  </p>` 
+  </p>`
   response.send(responseHTML)
 })
 
 // exercise 3.3
-app.get('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  const person = persons.find(person => person.id === id)
-  if (person) {
+app.get('/api/persons/:id', (request, response, next) => {
+  const id = request.params.id
+
+  Person.find({ _id: id })
+    .then((person) => {
       response.json(person)
-    } else {
-      response.status(404).end()
-    }
+    })
+    .catch((err) => {
+      next(err)
+    })
 })
 
 app.post('/api/persons', (request, response, next) => {
@@ -53,37 +55,36 @@ app.post('/api/persons', (request, response, next) => {
   })
 
   personToAdd.save()
-  .then(savedPerson => {
-    response.json(savedPerson.toJSON())
-  })
-  .catch((err) => {
-    next(err)
-  })
-  
+    .then(savedPerson => {
+      response.json(savedPerson.toJSON())
+    })
+    .catch((err) => {
+      next(err)
+    })
 })
 
 // TODO: Front End handles update optimistically, without a refresh
 app.put('/api/persons/:id', (request, response) => {
   const body = request.body
-  const filter = { name: body.name}
-  const update = {number: body.number}
+  const filter = { name: body.name }
+  const update = { number: body.number }
 
   Person.findOneAndUpdate(filter, update)
-  .then((updatedPerson) => {
-    response.json(updatedPerson.toJSON())
-  })
+    .then((updatedPerson) => {
+      response.json(updatedPerson.toJSON())
+    })
 })
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
   const id = request.params.id
-  
+
   Person.deleteOne({ _id: id })
-  .then(() => {
-    response.status(204).end()
-  })
-  .catch((err) => {
-    next(err)
-  })
+    .then(() => {
+      response.status(204).end()
+    })
+    .catch((err) => {
+      next(err)
+    })
 })
 
 const errorHandler = (error, request, response, next) => {
@@ -93,7 +94,7 @@ const errorHandler = (error, request, response, next) => {
     return response.status(400).send({ error: 'malformatted id' })
   } else if (error.name === 'ValidationError') {
     return response.status(400).send({ error: error.message })
-  } 
+  }
   next(error)
 }
 
