@@ -3,7 +3,6 @@ const app = express()
 app.use(express.json())
 app.use(express.static('build'))
 const Person = require('./models/person')
-var mongoose = require('mongoose');
 
 const morgan = require('morgan')
 morgan.token('RequestBodyToken', function (req, res) { return JSON.stringify(req.body) });
@@ -41,12 +40,7 @@ app.get('/api/persons/:id', (request, response) => {
     }
 })
 
-const generateId = () => {
-  const randomId = Math.floor(Math.random() * 1000)
-  return randomId
-}
-
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const body = request.body
 
   if (body.name === undefined) {
@@ -58,8 +52,12 @@ app.post('/api/persons', (request, response) => {
     number: body.number
   })
 
-  personToAdd.save().then(savedPerson => {
+  personToAdd.save()
+  .then(savedPerson => {
     response.json(savedPerson.toJSON())
+  })
+  .catch((err) => {
+    next(err)
   })
   
 })
@@ -67,7 +65,6 @@ app.post('/api/persons', (request, response) => {
 // TODO: Front End handles update optimistically, without a refresh
 app.put('/api/persons/:id', (request, response) => {
   const body = request.body
-  const id = request.params.id
   const filter = { name: body.name}
   const update = {number: body.number}
 
@@ -75,7 +72,6 @@ app.put('/api/persons/:id', (request, response) => {
   .then((updatedPerson) => {
     response.json(updatedPerson.toJSON())
   })
-
 })
 
 app.delete('/api/persons/:id', (request, response) => {
@@ -95,6 +91,8 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).send({ error: error.message })
   } 
   next(error)
 }
